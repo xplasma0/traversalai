@@ -5,6 +5,7 @@ const doctorCommand = vi.fn();
 const dashboardCommand = vi.fn();
 const resetCommand = vi.fn();
 const uninstallCommand = vi.fn();
+const spawnSync = vi.fn();
 
 const runtime = {
   log: vi.fn(),
@@ -32,6 +33,10 @@ vi.mock("../../runtime.js", () => ({
   defaultRuntime: runtime,
 }));
 
+vi.mock("node:child_process", () => ({
+  spawnSync,
+}));
+
 let registerMaintenanceCommands: typeof import("./register.maintenance.js").registerMaintenanceCommands;
 
 beforeAll(async () => {
@@ -47,6 +52,7 @@ describe("registerMaintenanceCommands doctor action", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    spawnSync.mockReturnValue({ status: 0 });
   });
 
   it("exits with code 0 after successful doctor run", async () => {
@@ -98,6 +104,31 @@ describe("registerMaintenanceCommands doctor action", () => {
         noOpen: true,
       }),
     );
+    expect(spawnSync).not.toHaveBeenCalled();
+  });
+
+  it("forwards extra args after dashboard as a follow-up command", async () => {
+    dashboardCommand.mockResolvedValue(undefined);
+
+    await runMaintenanceCli(["dashboard", "devices", "list"]);
+
+    expect(dashboardCommand).toHaveBeenCalledTimes(1);
+    expect(spawnSync).toHaveBeenCalledWith(
+      process.execPath,
+      expect.arrayContaining(["devices", "list"]),
+      expect.objectContaining({
+        stdio: "inherit",
+      }),
+    );
+  });
+
+  it("exits with forwarded command status when dashboard passthrough fails", async () => {
+    dashboardCommand.mockResolvedValue(undefined);
+    spawnSync.mockReturnValue({ status: 2 });
+
+    await runMaintenanceCli(["dashboard", "devices", "list"]);
+
+    expect(runtime.exit).toHaveBeenCalledWith(2);
   });
 
   it("passes reset options to reset command", async () => {

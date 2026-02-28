@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import type { Command } from "commander";
 import { dashboardCommand } from "../../commands/dashboard.js";
 import { doctorCommand } from "../../commands/doctor.js";
@@ -7,6 +8,7 @@ import { defaultRuntime } from "../../runtime.js";
 import { formatDocsLink } from "../../terminal/links.js";
 import { theme } from "../../terminal/theme.js";
 import { runCommandWithRuntime } from "../cli-utils.js";
+import { resolveActionArgs } from "./helpers.js";
 
 export function registerMaintenanceCommands(program: Command) {
   program
@@ -43,17 +45,36 @@ export function registerMaintenanceCommands(program: Command) {
   program
     .command("dashboard")
     .description("Open the Control UI with your current token")
+    .allowExcessArguments(true)
     .addHelpText(
       "after",
       () =>
         `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/dashboard", "docs.openclaw.ai/cli/dashboard")}\n`,
     )
     .option("--no-open", "Print URL but do not launch a browser")
-    .action(async (opts) => {
+    .action(async (opts, command) => {
       await runCommandWithRuntime(defaultRuntime, async () => {
         await dashboardCommand(defaultRuntime, {
           noOpen: opts.open === false,
         });
+        const passthroughArgs = resolveActionArgs(command);
+        if (passthroughArgs.length === 0) {
+          return;
+        }
+        const cliEntrypoint = process.argv[1];
+        if (!cliEntrypoint) {
+          throw new Error("failed to resolve CLI entrypoint for dashboard passthrough args");
+        }
+        const result = spawnSync(process.execPath, [cliEntrypoint, ...passthroughArgs], {
+          env: process.env,
+          stdio: "inherit",
+        });
+        if (result.error) {
+          throw result.error;
+        }
+        if (typeof result.status === "number" && result.status !== 0) {
+          defaultRuntime.exit(result.status);
+        }
       });
     });
 
