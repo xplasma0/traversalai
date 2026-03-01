@@ -1,6 +1,6 @@
 import { formatTerminalLink } from "../utils.js";
 
-export const DOCS_ROOT = "https://docs.openclaw.ai";
+export const DOCS_ROOT = "https://xplasma0.github.io/traversalai-docs";
 
 export function formatDocsLink(
   path: string,
