@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  formatControlUiSshHint,
   normalizeGatewayTokenInput,
   openUrl,
   resolveBrowserOpenCommand,
@@ -131,6 +132,22 @@ describe("normalizeGatewayTokenInput", () => {
   it('rejects literal string coercion artifacts ("undefined"/"null")', () => {
     expect(normalizeGatewayTokenInput("undefined")).toBe("");
     expect(normalizeGatewayTokenInput("null")).toBe("");
+  });
+});
+
+describe("formatControlUiSshHint", () => {
+  it("uses placeholder host when SSH connection advertises a private server IP", () => {
+    vi.stubEnv("USER", "alice");
+    vi.stubEnv("SSH_CONNECTION", "198.51.100.10 40322 10.128.0.2 22");
+    const hint = formatControlUiSshHint({ port: 28789 });
+    expect(hint).toContain("ssh -N -L 28789:127.0.0.1:28789 alice@gateway-host");
+  });
+
+  it("keeps public server IP when available in SSH connection metadata", () => {
+    vi.stubEnv("USER", "alice");
+    vi.stubEnv("SSH_CONNECTION", "198.51.100.10 40322 34.27.23.24 22");
+    const hint = formatControlUiSshHint({ port: 28789 });
+    expect(hint).toContain("ssh -N -L 28789:127.0.0.1:28789 alice@34.27.23.24");
   });
 });
 

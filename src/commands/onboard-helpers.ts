@@ -10,7 +10,7 @@ import { resolveAgentModelPrimaryValue } from "../config/model-input.js";
 import { resolveSessionTranscriptsDirForAgent } from "../config/sessions.js";
 import { callGateway } from "../gateway/call.js";
 import { normalizeControlUiBasePath } from "../gateway/control-ui-shared.js";
-import { pickPrimaryLanIPv4, isValidIPv4 } from "../gateway/net.js";
+import { isPrivateOrLoopbackAddress, isValidIPv4, pickPrimaryLanIPv4 } from "../gateway/net.js";
 import { isSafeExecutableValue } from "../infra/exec-safety.js";
 import { pickPrimaryTailnetIPv4 } from "../infra/tailnet.js";
 import { isWSL } from "../infra/wsl.js";
@@ -231,7 +231,11 @@ export function formatControlUiSshHint(params: {
 function resolveSshTargetHint(): string {
   const user = process.env.USER || process.env.LOGNAME || "user";
   const conn = process.env.SSH_CONNECTION?.trim().split(/\s+/);
-  const host = conn?.[2] ?? "<host>";
+  const serverHost = conn?.[2];
+  const host =
+    serverHost && isValidIPv4(serverHost) && !isPrivateOrLoopbackAddress(serverHost)
+      ? serverHost
+      : "gateway-host";
   return `${user}@${host}`;
 }
 
