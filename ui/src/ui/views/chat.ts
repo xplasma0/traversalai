@@ -1,6 +1,7 @@
 import { html, nothing } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
+import { buildAgentMainSessionKey, parseAgentSessionKey } from "../../../../src/routing/session-key.js";
 import {
   renderMessageGroup,
   renderReadingIndicatorGroup,
@@ -30,6 +31,40 @@ export type FallbackIndicatorStatus = {
   attempts: string[];
   occurredAt: number;
 };
+
+type AgentOption = {
+  id: string;
+  label: string;
+};
+
+type ModelOption = {
+  id: string;
+  label: string;
+  provider: string;
+};
+
+type OpenClawChatHost = {
+  connected?: boolean;
+  client?: {
+    request<T = unknown>(method: string, params?: unknown): Promise<T>;
+  } | null;
+  agentsList?: {
+    mainKey?: string;
+    agents?: Array<{
+      id?: string;
+      name?: string;
+      identity?: {
+        name?: string;
+      };
+    }>;
+  } | null;
+  debugModels?: unknown[];
+  loadOverview?: () => Promise<void>;
+  requestUpdate?: () => void;
+  lastError?: string | null;
+};
+
+let modelRefreshInFlight: Promise<void> | null = null;
 
 export type ChatProps = {
   sessionKey: string;
@@ -84,6 +119,89 @@ export type ChatProps = {
 
 const COMPACTION_TOAST_DURATION_MS = 5000;
 const FALLBACK_TOAST_DURATION_MS = 8000;
+
+function getOpenClawChatHost(): OpenClawChatHost | null {
+  const host = document.querySelector("openclaw-app") as OpenClawChatHost | null;
+  return host;
+}
+
+function toAgentOptions(host: OpenClawChatHost | null): AgentOption[] {
+  const agents = host?.agentsList?.agents;
+  if (!Array.isArray(agents)) {
+    return [];
+  }
+  return agents
+    .map((entry) => {
+      const id = typeof entry?.id === "string" ? entry.id.trim() : "";
+      if (!id) {
+        return null;
+      }
+      const label =
+        (typeof entry.identity?.name === "string" && entry.identity.name.trim()) ||
+        (typeof entry.name === "string" && entry.name.trim()) ||
+        id;
+      return { id, label };
+    })
+    .filter((entry): entry is AgentOption => Boolean(entry));
+}
+
+function toModelOptions(rawModels: unknown[]): ModelOption[] {
+  const seen = new Set<string>();
+  const out: ModelOption[] = [];
+  for (const raw of rawModels) {
+    const entry = raw as { id?: unknown; name?: unknown; provider?: unknown };
+    const id = typeof entry.id === "string" ? entry.id.trim() : "";
+    if (!id || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    const provider = typeof entry.provider === "string" ? entry.provider.trim() : "";
+    const name = typeof entry.name === "string" ? entry.name.trim() : "";
+    const label = name || id;
+    out.push({ id, label, provider: provider || "unknown" });
+  }
+  return out;
+}
+
+function ensureModelsLoaded(host: OpenClawChatHost | null) {
+  if (!host?.connected || !host.client) {
+    return;
+  }
+  if (Array.isArray(host.debugModels) && host.debugModels.length > 0) {
+    return;
+  }
+  if (modelRefreshInFlight) {
+    return;
+  }
+  modelRefreshInFlight = host.client
+    .request<{ models?: unknown[] }>("models.list", {})
+    .then((res) => {
+      host.debugModels = Array.isArray(res?.models) ? res.models : [];
+      host.requestUpdate?.();
+    })
+    .catch(() => {
+      // no-op: surfaced via existing gateway error states
+    })
+    .finally(() => {
+      modelRefreshInFlight = null;
+    });
+}
+
+function resolveSelectedAgentId(props: ChatProps, agentOptions: AgentOption[]): string {
+  const parsed = parseAgentSessionKey(props.sessionKey);
+  const explicitAgentId = parsed?.agentId?.trim();
+  if (explicitAgentId) {
+    return explicitAgentId;
+  }
+  const fallback = agentOptions[0]?.id;
+  return fallback ?? "main";
+}
+
+function resolveSelectedModelId(props: ChatProps): string {
+  const activeSession = props.sessions?.sessions?.find((row) => row.key === props.sessionKey);
+  const model = typeof activeSession?.model === "string" ? activeSession.model.trim() : "";
+  return model;
+}
 
 function adjustTextareaHeight(el: HTMLTextAreaElement) {
   el.style.height = "auto";
@@ -237,6 +355,107 @@ function renderAttachmentPreview(props: ChatProps) {
   `;
 }
 
+function renderChatToolbar(props: ChatProps) {
+  const host = getOpenClawChatHost();
+  ensureModelsLoaded(host);
+  const agentOptions = toAgentOptions(host);
+  const modelOptions = toModelOptions(Array.isArray(host?.debugModels) ? host.debugModels : []);
+  const selectedAgentId = resolveSelectedAgentId(props, agentOptions);
+  const selectedModelId = resolveSelectedModelId(props);
+  const mainKey =
+    typeof host?.agentsList?.mainKey === "string" && host.agentsList.mainKey.trim()
+      ? host.agentsList.mainKey.trim()
+      : "main";
+
+  return html`
+    <div class="chat-header">
+      <div class="chat-header__left">
+        <label class="field chat-session">
+          <span>Agent</span>
+          <select
+            .value=${selectedAgentId}
+            ?disabled=${!props.connected || agentOptions.length === 0}
+            @change=${(event: Event) => {
+              const target = event.target as HTMLSelectElement;
+              const agentId = target.value.trim();
+              if (!agentId) {
+                return;
+              }
+              const nextSessionKey = buildAgentMainSessionKey({ agentId, mainKey });
+              props.onSessionKeyChange(nextSessionKey);
+            }}
+          >
+            ${agentOptions.length === 0
+              ? html`<option value="">No agents</option>`
+              : agentOptions.map(
+                  (agent) => html`<option value=${agent.id}>${agent.label} (${agent.id})</option>`,
+                )}
+          </select>
+        </label>
+
+        <label class="field chat-session">
+          <span>Model</span>
+          <select
+            .value=${selectedModelId}
+            ?disabled=${!props.connected || !host?.client}
+            @change=${async (event: Event) => {
+              const target = event.target as HTMLSelectElement;
+              const modelId = target.value.trim();
+              if (!host?.client) {
+                return;
+              }
+              try {
+                await host.client.request("sessions.patch", {
+                  key: props.sessionKey,
+                  model: modelId || null,
+                });
+                await host.loadOverview?.();
+              } catch {
+                // Existing global error surface handles request failures.
+              }
+            }}
+          >
+            <option value="">Default</option>
+            ${modelOptions.map(
+              (model) => html`
+                <option value=${model.id}>${model.provider} · ${model.label}</option>
+              `,
+            )}
+          </select>
+        </label>
+
+        <label class="field chat-session">
+          <span>Session</span>
+          <input
+            type="text"
+            .value=${props.sessionKey}
+            ?disabled=${!props.connected}
+            @change=${(event: Event) => {
+              const target = event.target as HTMLInputElement;
+              props.onSessionKeyChange(target.value.trim());
+            }}
+          />
+        </label>
+      </div>
+
+      <div class="chat-header__right">
+        <button class="btn" type="button" ?disabled=${props.loading} @click=${props.onRefresh}>
+          Refresh
+        </button>
+        ${
+          props.focusMode
+            ? nothing
+            : html`
+                <button class="btn" type="button" @click=${props.onToggleFocusMode}>
+                  Focus
+                </button>
+              `
+        }
+      </div>
+    </div>
+  `;
+}
+
 export function renderChat(props: ChatProps) {
   const canCompose = props.connected;
   const isBusy = props.sending || props.stream !== null;
@@ -319,6 +538,8 @@ export function renderChat(props: ChatProps) {
       ${props.disabledReason ? html`<div class="callout">${props.disabledReason}</div>` : nothing}
 
       ${props.error ? html`<div class="callout danger">${props.error}</div>` : nothing}
+
+      ${renderChatToolbar(props)}
 
       ${
         props.focusMode
