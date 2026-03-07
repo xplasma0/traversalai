@@ -4,8 +4,11 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "build:technical": "vite build --config vite.technical.config.ts",
     "dev": "vite",
+    "dev:technical": "vite --config vite.technical.config.ts",
     "preview": "vite preview",
+    "preview:technical": "vite preview --config vite.technical.config.ts",
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {

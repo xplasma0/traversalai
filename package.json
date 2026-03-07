@@ -141,12 +141,14 @@
     "test:ui": "pnpm lint:ui:no-raw-window-open && pnpm --dir ui test",
     "test:voicecall:closedloop": "vitest run extensions/voice-call/src/manager.test.ts extensions/voice-call/src/media-stream.test.ts src/plugins/voice-call.plugin.test.ts --maxWorkers=1",
     "test:watch": "vitest",
+    "tsgo": "tsc --noEmit",
     "tui": "node scripts/run-node.mjs tui",
     "tui:dev": "OPENCLAW_PROFILE=dev CLAWDBOT_PROFILE=dev node scripts/run-node.mjs --dev tui",
     "ui:build": "node scripts/ui.js build",
+    "ui:build:technical": "node scripts/ui.js build --config vite.technical.config.ts",
     "ui:dev": "node scripts/ui.js dev",
-    "ui:install": "node scripts/ui.js install",
-    "tsgo": "tsc --noEmit"
+    "ui:dev:technical": "node scripts/ui.js dev --config vite.technical.config.ts",
+    "ui:install": "node scripts/ui.js install"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "0.14.1",
