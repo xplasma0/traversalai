@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Explanation Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .file-tree {
+            padding-left: 20px;
+            list-style: none;
+        }
+        .file-tree li {
+            margin: 5px 0;
+        }
+        .file-tree li a {
+            text-decoration: none;
+            color: #2196F3;
+        }
+        .file-tree li a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Code Explanation Interface</h1>
+        <h2>File Tree Visualization</h2>
+        <ul class="file-tree">
+            <li><a href="#/path/to/file1">File 1</a></li>
+            <li><a href="#/path/to/file2">File 2</a>
+                <ul>
+                    <li><a href="#/path/to/file2/subfile1">Subfile 1</a></li>
+                    <li><a href="#/path/to/file2/subfile2">Subfile 2</a></li>
+                </ul>
+            </li>
+            <li><a href="#/path/to/file3">File 3</a></li>
+        </ul>
+        <p>Use this interface to interactively explore the code base and understand its functionality. Click on any file link to view its content and explanations.</p>
+    </div>
+</body>
+</html>
