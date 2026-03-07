@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraversalAI - Complete Codebase Tree</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        header p { font-size: 1.1em; opacity: 0.9; }
+        .content {
+            padding: 40px;
+        }
+        .tree {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f5f5f5;
+            padding: 30px;
+            border-radius: 8px;
+            overflow-x: auto;
+            line-height: 1.8;
+        }
+        .tree-node {
+            margin-left: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .tree-icon {
+            margin-right: 8px;
+            min-width: 20px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .tree-content {
+            flex: 1;
+        }
+        .tree-name {
+            color: #333;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            padding: 5px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+        .tree-name:hover {
+            background: #e8e8ff;
+            color: #667eea;
+        }
+        .tree-desc {
+            color: #666;
+            font-size: 0.9em;
+            margin-left: 28px;
+            padding: 5px;
+            border-left: 2px solid #ddd;
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+        .folder { color: #ff9800; font-weight: bold; }
+        .file { color: #2196f3; }
+        .config { color: #9c27b0; }
+        .script { color: #4caf50; }
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 0;
+            margin-right: 5px;
+            width: 20px;
+            text-align: center;
+        }
+        .toggle-btn:hover { color: #764ba2; }
+        .children {
+            margin-left: 20px;
+            border-left: 1px solid #ddd;
+            padding-left: 10px;
+        }
+        .collapsed .children { display: none; }
+        .collapsed .toggle-btn::before { content: '▶'; }
+        .toggle-btn::before { content: '▼'; }
+        .root-node {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 0;
+            border: 2px solid #667eea;
+        }
+        .search-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 1em;
+            width: 100%;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number { font-size: 2em; font-weight: bold; }
+        .stat-label { font-size: 0.9em; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 TraversalAI - Complete Codebase Tree</h1>
+            <p>Interactive file and folder structure visualization</p>
+        </header>
+        
+        <div class="content">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Modules</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Platforms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">85.6%</div>
+                    <div class="stat-label">TypeScript</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">8+</div>
+                    <div class="stat-label">Channels</div>
+                </div>
+            </div>
+
+            <input type="text" class="search-box" placeholder="🔍 Search files and folders..." id="searchBox">
+
+            <div class="tree">
+                <div class="root-node">
+                    <div class="tree-node">
+                        <span class="tree-icon folder">📦</span>
+                        <div class="tree-content">
+                            <div class="tree-name">traversalai</div>
+                            <div class="tree-desc">Multi-channel AI operations platform for hospitality teams</div>
+                        </div>
+                    </div>
+                    
+                    <div class="children">
+                        <!-- Configuration Files -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon config">⚙️</span>
+                            <div class="tree-content">
+                                <div class="tree-name">Configuration Files</div>
+                                <div class="tree-desc">Project configuration and environment setup</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">package.json</div>
+                                    <div class="tree-desc">NPM package configuration, scripts, and dependencies (Node 22+, pnpm 10.23.0)</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">pnpm-workspace.yaml</div>
+                                    <div class="tree-desc">Workspace configuration for monorepo structure</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">tsconfig.json</div>
+                                    <div class="tree-desc">TypeScript compiler configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">.oxlintrc.json</div>
+                                    <div class="tree-desc">Oxlint linting rules configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">.oxfmtrc.jsonc</div>
+                                    <div class="tree-desc">Oxfmt code formatting configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">vitest.config.ts</div>
+                                    <div class="tree-desc">Vitest unit testing framework configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">vitest.e2e.config.ts</div>
+                                    <div class="tree-desc">End-to-end testing configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">docker-compose.yml</div>
+                                    <div class="tree-desc">Docker orchestration for local development</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">fly.toml</div>
+                                    <div class="tree-desc">Fly.io deployment configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon config">📝</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">render.yaml</div>
+                                    <div class="tree-desc">Render.com deployment configuration</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Root Files -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon file">📄</span>
+                            <div class="tree-content">
+                                <div class="tree-name">Documentation Files</div>
+                                <div class="tree-desc">Project documentation and guides</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">README.md</div>
+                                    <div class="tree-desc">Main project documentation with quick start guide and features overview</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">VISION.md</div>
+                                    <div class="tree-desc">Project vision and long-term goals</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">CONTRIBUTING.md</div>
+                                    <div class="tree-desc">Contribution guidelines and development practices</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">CHANGELOG.md</div>
+                                    <div class="tree-desc">Version history and release notes</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">SECURITY.md</div>
+                                    <div class="tree-desc">Security policy and vulnerability disclosure procedures</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">AGENTS.md</div>
+                                    <div class="tree-desc">Agent system documentation and API reference</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">LICENSE</div>
+                                    <div class="tree-desc">MIT License file</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- src Directory -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">src/</div>
+                                <div class="tree-desc">Main source code directory</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">gateway/</div>
+                                    <div class="tree-desc">Core gateway server handling message routing and orchestration</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">server.ts</div>
+                                        <div class="tree-desc">Express.js HTTP server setup and middleware configuration</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">router.ts</div>
+                                        <div class="tree-desc">Message routing logic and protocol handlers</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">orchestrator.ts</div>
+                                        <div class="tree-desc">Coordinates gateway operations and component lifecycle</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">channels/</div>
+                                    <div class="tree-desc">Platform-specific adapters for messaging services</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon folder">📁</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">slack/ discord/ telegram/ whatsapp/ signal/ line/ imessage/</div>
+                                        <div class="tree-desc">Individual channel implementations with normalize message interfaces</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">agents/</div>
+                                    <div class="tree-desc">AI agent implementations and task execution</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">agent-core.ts</div>
+                                        <div class="tree-desc">Base agent class and lifecycle management</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">llm-integration.ts</div>
+                                        <div class="tree-desc">LLM provider integration and API communication</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">tool-executor.ts</div>
+                                        <div class="tree-desc">Tool execution engine for browser automation and tasks</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">memory/</div>
+                                    <div class="tree-desc">Conversation memory and context management</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">memory-store.ts</div>
+                                        <div class="tree-desc">Persistent memory storage for conversations and context</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">context-manager.ts</div>
+                                        <div class="tree-desc">Manages conversation context and session state</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">plugins/</div>
+                                    <div class="tree-desc">Plugin system for extensibility</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">plugin-loader.ts</div>
+                                        <div class="tree-desc">Dynamic plugin loading and lifecycle management</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">plugin-api.ts</div>
+                                        <div class="tree-desc">Plugin SDK and public API for developers</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">security/</div>
+                                    <div class="tree-desc">Authentication, encryption, and security features</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">encryption.ts</div>
+                                        <div class="tree-desc">End-to-end encryption utilities</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">pairing.ts</div>
+                                        <div class="tree-desc">Device pairing and registration system</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">auth.ts</div>
+                                        <div class="tree-desc">Authentication and authorization logic</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">media/</div>
+                                    <div class="tree-desc">Media processing and handling</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">media-processor.ts</div>
+                                        <div class="tree-desc">Image and video processing with Sharp</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">media-understanding.ts</div>
+                                        <div class="tree-desc">AI-powered media analysis and understanding</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">utils/</div>
+                                    <div class="tree-desc">Utility functions and helpers</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">utils.ts</div>
+                                        <div class="tree-desc">Common utility functions</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">logger.ts</div>
+                                        <div class="tree-desc">Logging system with multiple log levels</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">cli/</div>
+                                    <div class="tree-desc">Command-line interface implementation</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">cli.ts</div>
+                                        <div class="tree-desc">Commander.js CLI setup and commands</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">commands.ts</div>
+                                        <div class="tree-desc">Individual command implementations</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">index.ts</div>
+                                    <div class="tree-desc">Main entry point for the application</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">entry.ts</div>
+                                    <div class="tree-desc">Application initialization and startup logic</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- apps Directory -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">apps/</div>
+                                <div class="tree-desc">Platform-specific applications</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">ios/</div>
+                                    <div class="tree-desc">iOS application (Swift, Jetpack Compose)</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">README.md</div>
+                                        <div class="tree-desc">iOS app development guide and setup instructions</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">android/</div>
+                                    <div class="tree-desc">Android application (Kotlin, Jetpack Compose)</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">README.md</div>
+                                        <div class="tree-desc">Android app development guide, build instructions, and USB debugging setup</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">build.gradle</div>
+                                        <div class="tree-desc">Gradle build configuration</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">macos/</div>
+                                    <div class="tree-desc">macOS application (Swift)</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">project.pbxproj</div>
+                                        <div class="tree-desc">Xcode project configuration</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">shared/</div>
+                                    <div class="tree-desc">Shared code between iOS and macOS</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ui Directory -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">ui/</div>
+                                <div class="tree-desc">Web control center dashboard</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">package.json</div>
+                                    <div class="tree-desc">UI dependencies (Lit, Vite, Vitest)</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">src/</div>
+                                    <div class="tree-desc">UI source code (Web Components with Lit)</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">main.ts</div>
+                                        <div class="tree-desc">UI application entry point</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">components/*.ts</div>
+                                        <div class="tree-desc">Web Components built with Lit</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">index.html</div>
+                                    <div class="tree-desc">UI HTML entry point</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Swabble Directory -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">Swabble/</div>
+                                <div class="tree-desc">macOS wake-word daemon (Swift 6.2)</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">README.md</div>
+                                    <div class="tree-desc">Swabble daemon documentation with Speech.framework wake-word detection</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">Package.swift</div>
+                                    <div class="tree-desc">Swift package manager configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">Sources/</div>
+                                    <div class="tree-desc">Swift source files for wake-word detection and CLI</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- extensions Directory -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">extensions/</div>
+                                <div class="tree-desc">Plugin extensions and integrations</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">acpx/</div>
+                                    <div class="tree-desc">ACP protocol runtime backend extension</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">package.json</div>
+                                        <div class="tree-desc">ACPX extension package configuration</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">index.ts</div>
+                                        <div class="tree-desc">ACPX extension implementation</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- scripts Directory -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">scripts/</div>
+                                <div class="tree-desc">Build and utility scripts</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <span class="tree-icon script">🔨</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">build.sh</div>
+                                    <div class="tree-desc">Build script for compilation and bundling</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon script">🔨</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">test.sh</div>
+                                    <div class="tree-desc">Test runner script</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon script">🔨</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">deploy.sh</div>
+                                    <div class="tree-desc">Deployment script for production</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- docs Directory -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">docs/</div>
+                                <div class="tree-desc">Project documentation and guides</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">API.md</div>
+                                    <div class="tree-desc">API documentation and endpoints</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">ARCHITECTURE.md</div>
+                                    <div class="tree-desc">System architecture and design patterns</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">DEPLOYMENT.md</div>
+                                    <div class="tree-desc">Deployment guides for different platforms</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Git Configuration -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon folder">📁</span>
+                            <div class="tree-content">
+                                <div class="tree-name">.github/</div>
+                                <div class="tree-desc">GitHub configuration and workflows</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <button class="toggle-btn"></button>
+                                <span class="tree-icon folder">📁</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">workflows/</div>
+                                    <div class="tree-desc">GitHub Actions CI/CD workflows</div>
+                                </div>
+                            </div>
+                            <div class="children">
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">test.yml</div>
+                                        <div class="tree-desc">Automated testing workflow</div>
+                                    </div>
+                                </div>
+                                <div class="tree-node">
+                                    <span class="tree-icon file">📄</span>
+                                    <div class="tree-content">
+                                        <div class="tree-name">build.yml</div>
+                                        <div class="tree-desc">Build and deployment workflow</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Docker Files -->
+                        <div class="tree-node">
+                            <button class="toggle-btn"></button>
+                            <span class="tree-icon config">🐳</span>
+                            <div class="tree-content">
+                                <div class="tree-name">Docker Configuration</div>
+                                <div class="tree-desc">Container and orchestration setup</div>
+                            </div>
+                        </div>
+                        <div class="children">
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">Dockerfile</div>
+                                    <div class="tree-desc">Main Docker image configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">Dockerfile.sandbox</div>
+                                    <div class="tree-desc">Sandbox environment Docker configuration</div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <span class="tree-icon file">📄</span>
+                                <div class="tree-content">
+                                    <div class="tree-name">.dockerignore</div>
+                                    <div class="tree-desc">Files to exclude from Docker build</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle functionality for tree nodes
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.parentElement.parentElement.classList.toggle('collapsed');
+            });
+        });
+
+        // Search functionality
+        const searchBox = document.getElementById('searchBox');
+        if (searchBox) {
+            searchBox.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                document.querySelectorAll('.tree-name').forEach(node => {
+                    const text = node.textContent.toLowerCase();
+                    const parent = node.closest('.tree-node');
+                    if (text.includes(searchTerm)) {
+                        parent.style.display = '';
+                        // Show parent nodes
+                        let current = parent.closest('.children');
+                        while (current) {
+                            current.previousElementSibling.classList.remove('collapsed');
+                            current = current.closest('.tree-node').closest('.children');
+                        }
+                    } else {
+                        parent.style.display = 'none';
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
